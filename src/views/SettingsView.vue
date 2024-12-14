@@ -1,12 +1,13 @@
 <template>
-  <div class="settings-view">
-    <h2>Settings</h2>
+  <div class="max-w-md text-zinc-200 p-8">
+    <h2 class="h2">Settings</h2>
     <h3>API Keys</h3>
 
     <!-- GPT API Key -->
     <div class="api-key-section">
       <label for="gptApiKey">GPT</label>
       <input
+        class="input-base w-64"
         id="gptApiKey"
         type="password"
         v-model="apiKeys.gpt"
@@ -18,6 +19,7 @@
     <div class="api-key-section">
       <label for="claudeApiKey">Claude</label>
       <input
+        class="input-base w-64"
         id="claudeApiKey"
         type="password"
         v-model="apiKeys.claude"
@@ -29,6 +31,7 @@
     <div class="api-key-section">
       <label for="geminiApiKey">Gemini</label>
       <input
+        class="input-base w-64"
         id="geminiApiKey"
         type="password"
         v-model="apiKeys.gemini"
@@ -36,7 +39,7 @@
       />
     </div>
 
-    <button class="save-btn" @click="saveApiKeys">Save</button>
+    <button class="btn h-12 w-24 text-base" @click="saveApiKeys">Save</button>
   </div>
 </template>
 
@@ -71,66 +74,11 @@ const saveApiKeys = () => {
 </script>
 
 <style scoped>
-.settings-view {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  padding: 2rem;
-  border-radius: 8px;
-  max-width: 400px;
-  margin: 0 auto;
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
-}
-
-h2 {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  color: #ffffff;
-}
-
-h3 {
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-  color: #c0c0c0;
-}
-
 .api-key-section {
-  margin-bottom: 1.5rem;
+  @apply mb-6
 }
 
 label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-  color: #b0b0b0;
-}
-
-input {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  border: 1px solid #444;
-  border-radius: 4px;
-}
-
-input::placeholder {
-  color: #888;
-}
-
-.save-btn {
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 1rem;
-  background-color: #4caf50;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.save-btn:hover {
-  background-color: #45a049;
+  @apply block mb-2 text-base text-zinc-400
 }
 </style>

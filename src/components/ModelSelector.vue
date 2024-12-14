@@ -20,21 +20,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import chatgptIcon from '@/assets/chatgpt-icon.png'
-import claudeIcon from '@/assets/claude-icon.png'
-
-const models = [
-    {
-        id: 'chatgpt', 
-        name: 'ChatGPT',
-        icon: chatgptIcon
-    },
-    {
-        id: 'claude',
-        name: 'Claude', 
-        icon: claudeIcon
-    }
-]
+import { models } from '@/config/models'
 
 const selectedModel = ref('chatgpt')
 const emit = defineEmits(['model-change'])

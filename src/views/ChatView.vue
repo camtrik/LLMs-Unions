@@ -1,14 +1,11 @@
 <template>
   <div class="flex flex-col h-screen">
     <div
-      class="header"
+      class="flex flex-nowrap fixed w-full items-baseline top-0 px-6 py-4 bg-zinc-900 top-0"
     >
-      <div class="title">ChatGPT</div>
-      <div class="subtitle">
-        基于 OpenAI 的 ChatGPT 自然语言模型人工智能对话
-      </div>
+      <div class="text-2xl font-bold text-zinc-200">{{ modelInfo?.name }}</div>
       <div
-        class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white rounded-md"
+        class="ml-auto px-3 py-2 text-sm cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-md"
       >
         设置
       </div>
@@ -16,16 +13,16 @@
 
     <div class="flex-1 mx-2 mt-20 mb-2" ref="chatListDom">
       <div
-        class="group flex flex-col px-4 py-3 hover:bg-slate-100 rounded-lg"
-        v-for="item of messageList.filter((v) => v.role !== 'system')"
+        class="group flex flex-col px-4 py-3 hover:bg-zinc-800 rounded-lg"
+        v-for="item of currentMessages"
       >
         <div class="flex justify-between items-center mb-2">
-          <div class="font-bold">{{ roleAlias[item.role] }}：</div>
+          <div class="font-bold text-zinc-200">{{ modelInfo?.name }}：</div>
           <Copy class="invisible group-hover:visible" :content="item.content" />
         </div>
         <div>
           <div
-            class="prose text-sm text-gray-100 leading-relaxed"
+            class="prose text-sm text-zinc-200 leading-relaxed"
             v-if="item.content"
             v-html="md.render(item.content)"
           ></div>
@@ -34,16 +31,20 @@
       </div>
     </div>
 
-    <div class="footer">
-      <div class="input-container">
+    <div class="sticky bottom-0 w-full p-6 pb-8 bg-zinc-900">
+      <div class="flex">
         <input
-          class="input"
+          class="input-base"
           type="text"
           placeholder="请输入"
           v-model="messageContent"
           @keydown.enter="isTalking || sendChatMessage()"
         />
-        <button class="btn" :disabled="isTalking" @click="sendChatMessage()">
+        <button 
+          class="btn"
+          :disabled="isTalking" 
+          @click="sendChatMessage()"
+        >
           发送
         </button>
       </div>
@@ -52,42 +53,56 @@
 </template>
 
 <script setup lang="ts">
-
-import { ref, watch, nextTick, onMounted } from 'vue';
-import type { ChatMessage } from '@/types';
+import { ref, watch, nextTick, onMounted, computed } from 'vue';
+import type { ChatMessage, ChatSession } from '@/types';
 import cryptoJS from "crypto-js";
 import Loading from '../components/Loading.vue'
 import Copy from '../components/Copy.vue'
 import { md } from '@/libs/markdown';
-import { chat } from '@/libs/gpt';
+import { chat } from '@/libs/chat';
+import { getModelById } from '@/config/models';
+import { chatgpt } from '@/libs/gpt';
+import { claude } from '@/libs/claude';
+import { Data } from '@icon-park/vue-next';
 
-let apiKey = "";
+let gptAPIKey = "";
+let claudeAPIKey = "";
 let haveApiKey = ref(false);
 let isTalking = ref(false);
 let messageContent = ref("");
 const decoder = new TextDecoder("utf-8");
-const roleAlias = {
-  user: "ME", 
-  assistant: "GPT",
-}
-const messageList = ref<ChatMessage[]>([
-  {
-    role: "system",
-    content: "你是 ChatGPT，OpenAI 训练的大型语言模型，尽可能简洁地回答。",
+const props = defineProps<{
+  selectedModel: string;
+}>();
+
+const roleAlias = { user: "ME", assistant: "ChatGPT"};
+
+const chatSessions = ref<Record<string, ChatSession>> ({
+  chatgpt: {
+    model: 'chatgpt',
+    messages: [
+      {
+        role: "assistant",
+        content: `你好，我是ChatGPT，我可以提供一些常用服务和信息。`  
+      }
+    ]
   },
-  {
-    role: "assistant",
-    content: `你好，我是AI语言模型，我可以提供一些常用服务和信息，例如：
+  claude: {
+    model: 'claude',
+    messages: [
+      {
+        role: "assistant",
+        content: `你好，我是 Claude，让我来协助你。`  
+      }
+    ]
+  }
+});
 
-1. 翻译：我可以把中文翻译成英文，英文翻译成中文，还有其他一些语言翻译，比如法语、日语、西班牙语等。
+const modelInfo = computed(() => getModelById(props.selectedModel))
 
-2. 咨询服务：如果你有任何问题需要咨询，例如健康、法律、投资等方面，我可以尽可能为你提供帮助。
-
-3. 闲聊：如果你感到寂寞或无聊，我们可以聊一些有趣的话题，以减轻你的压力。
-
-请告诉我你需要哪方面的帮助，我会根据你的需求给你提供相应的信息和建议。`,
-  },
-]);
+const currentMessages = computed(() => 
+  chatSessions.value[props.selectedModel]?.messages || []
+);
 
 onMounted(() => {
   if (getGPTAPIKey()) {
@@ -100,21 +115,26 @@ onMounted(() => {
 const sendChatMessage = async(content: string = messageContent.value) => {
   try {
     isTalking.value = true;
-    if (messageList.value.length === 2) {
-      // if has 2 messages, remove one 
-      messageList.value.pop();
+    const currentSession = chatSessions.value[props.selectedModel]
+
+    if (isFirstMessage(currentSession)) {
+      currentSession.messages = [];
     }
-    messageList.value.push({
+    currentSession.messages.push({
       role: "user",
       content,
     });
     clearMessageContent();
-    messageList.value.push({
+    currentSession.messages.push({
       role: "assistant",
       content: "",
     });
 
-    const { body, status } = await chat(messageList.value, getGPTAPIKey());
+    const { body, status } = await chat(currentSession.messages, getAPIKey(), props.selectedModel);
+    // const { body, status } = await chatgpt(currentSession.messages, getAPIKey());
+    // const { body, status } = await claude(currentSession.messages, getAPIKey());
+
+
     if (body) {
       const reader = body.getReader();
       await readStream(reader, status);
@@ -126,7 +146,6 @@ const sendChatMessage = async(content: string = messageContent.value) => {
   }
 }
 
-// Using SSE
 const readStream = async (
   reader: ReadableStreamDefaultReader<Uint8Array>, 
   status: number,
@@ -152,92 +171,79 @@ const readStream = async (
     partialLine = newLines.pop() ?? "";
     
     for (const line of newLines) {
-      if (line.length === 0 || line.startsWith(":")) continue; // empty message & sse comment message 
-      if (line === "data: [DONE]") return;  // END of stream 
-      
-      const json = JSON.parse(line.substring(6));
-      const content = 
-        status === 200 
-          ? json.choices[0].delta.content ?? ""
-          : json.error.message;
-      appendLastMessageContent(content);
+      if (line.startsWith("event:")) continue; // claude starts with event
+      if (line.length === 0 || line.startsWith(":")) continue;
+      try {
+        const json = JSON.parse(line.substring(6));
+        if (props.selectedModel === 'chatgpt') {
+          if (line === "data: [DONE]") return;
+
+          const content = 
+            status === 200 
+              ? json.choices[0].delta.content ?? ""
+              : json.error.message;
+          appendLastMessageContent(content);
+        } else if (props.selectedModel === 'claude') {
+          if (json.type === 'content_block_delta') {
+            const content = json.delta.text ?? "";
+            appendLastMessageContent(content);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 }
 
-const appendLastMessageContent = (content: string) =>
-  (messageList.value[messageList.value.length - 1].content += content);
+const isFirstMessage = (session: ChatSession) => {
+  return session.messages.length === 1 && session.messages[0].role === "assistant";
+}
+
+const appendLastMessageContent = (content: string) => {
+  const currentSession = chatSessions.value[props.selectedModel];
+  const lastMessage = currentSession.messages[currentSession.messages.length - 1];
+  lastMessage.content += content;
+}
   
 const clearMessageContent = () => 
   messageContent.value = "";
   
+// API key  
 const getSecretKey = () => "ebbi";
-const getGPTAPIKey = () => {
-  if (apiKey) return apiKey;
-  const aesAPIKey = localStorage.getItem("gptAPIKey") ?? "";
 
-  apiKey = cryptoJS.AES.decrypt(aesAPIKey, getSecretKey()).toString(
-    cryptoJS.enc.Utf8
-  );
-  return apiKey;
+
+const getAPIKey = () => {
+  if (props.selectedModel === 'chatgpt') {
+    return getGPTAPIKey();
+  } else if (props.selectedModel === 'claude') {
+    return getClaudeAPIKey();
+  }
+  throw new Error(`No API key for model: ${props.selectedModel}`);
 };
 
+const getGPTAPIKey = () => {
+  if (gptAPIKey) return gptAPIKey;
+  const aesAPIKey = localStorage.getItem("gptAPIKey") ?? "";
+
+  gptAPIKey = cryptoJS.AES.decrypt(aesAPIKey, getSecretKey()).toString(
+    cryptoJS.enc.Utf8
+  );
+  return gptAPIKey;
+};
+
+const getClaudeAPIKey = () => {
+  if (claudeAPIKey) return claudeAPIKey;
+  const aesAPIKey = localStorage.getItem("claudeAPIKey") ?? "";
+
+  claudeAPIKey = cryptoJS.AES.decrypt(aesAPIKey, getSecretKey()).toString(
+    cryptoJS.enc.Utf8
+  );
+  return claudeAPIKey;
+}
 </script>
 
-
-
-
 <style>
-
-.header {
-  display: flex;
-  flex-wrap: nowrap;
-  /* position: top; */
-  width: 100%;
-  align-items: baseline;
-  top: 0;
-  padding: 1rem 1.5rem;
-  background-color: rgb(32, 31, 31);
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: rgb(212, 206, 206);
-}
-
-.subtitle {
-  margin-left: 1rem;
-  font-size: 0.875rem;
-  color: white;
-}
-
-.footer {
-  position: sticky;
-  bottom: 0;
-  width: 100%;
-  padding: 1.5rem 1.5rem 2rem;
-  background-color: rgb(32, 31, 31); 
-}
-
-.input-container {
-  display: flex;
-}
-
-.input {
-  flex: 1;
-  padding: 0.75rem;
-  background-color: rgb(45, 45, 45); 
-  color: white;
-  border: 1px solid rgb(72, 72, 72); 
-  border-radius: 0.375rem;
-  margin-right: 0.5rem;
-}
-
-.input::placeholder {
-  color: rgb(150, 150, 150); 
-}
-
 .prose ol {
   @apply list-decimal pl-8;
 }

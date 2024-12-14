@@ -3,17 +3,35 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  .btn {
-    @apply px-4 py-2 text-sm font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-700 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 whitespace-nowrap disabled:bg-blue-300;
+#app {
+  @apply bg-zinc-900;
+}
+
+@layer base {
+  h2 {
+    @apply text-3xl mb-4 text-white;
   }
 
-  .input {
-    @apply px-4 py-2 text-gray-700 bg-white border rounded-md mr-2 sm:mr-4 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40 flex-grow;
+  h3 {
+    @apply text-xl mb-6 text-zinc-400;
+  }
+}
+
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 text-sm font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-green-700 rounded-md hover:bg-green-600 focus:outline-none focus:bg-blue-600 whitespace-nowrap disabled:bg-blue-300;
+  }
+
+  .input-base {
+    @apply flex-1 px-3 py-3 bg-zinc-800 text-white border border-zinc-700 rounded-md mr-2 placeholder-zinc-400;
   }
 
   .sidebar-item {
-    @apply transition-all duration-200 cursor-pointer rounded-lg;
+    @apply text-zinc-200 transition-all duration-200 cursor-pointer rounded-lg;
+  }
+  .sidebar-item:hover {
+    @apply bg-zinc-700/70;
   }
   
   .sidebar-item-active {
@@ -23,4 +41,5 @@
   .sidebar-item-inactive {
     @apply text-zinc-300 hover:bg-zinc-700/70;
   }
+
 }

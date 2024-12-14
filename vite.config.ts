@@ -23,5 +23,17 @@ export default defineConfig({
         autoprefixer
       ]
     }
+  },
+  server: {
+    proxy: {
+      '/api/claude': {
+        target: 'https://api.anthropic.com/v1/messages',
+        changeOrigin: true,
+        rewrite: (path) => '',
+        configure: (proxy, options) => {
+          // 你可以在这里添加额外的代理配置
+        }
+      }
+    }
   }
 })

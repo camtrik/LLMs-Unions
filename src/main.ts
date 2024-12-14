@@ -1,4 +1,4 @@
-import './assets/main.css'
+// import './assets/main.css'
 import './assets/tailwind.css'
 import 'highlight.js/styles/default.css';  
 
