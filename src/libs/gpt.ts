@@ -2,7 +2,7 @@ import type { ChatMessage } from "@/types";
 
 export async function chatgpt(messageList: ChatMessage[], apiKey: string) {
   try {
-    const result = await fetch("https://api.openai.com/v1/chat/completions", {
+    const result = await fetch("http://localhost:3000/api/chatgpt", {
       method: "post",
       headers: {
         "Content-Type": "application/json",
