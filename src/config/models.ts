@@ -1,5 +1,6 @@
 import chatgptIcon from '@/assets/chatgpt-icon.png'
 import claudeIcon from '@/assets/claude-icon.png'
+import geminiIcon from '@/assets/gemini-icon.png'
 
 export const models = [
     {
@@ -11,6 +12,11 @@ export const models = [
         id: 'claude',
         name: 'Claude', 
         icon: claudeIcon
+    }, 
+    {
+        id: 'gemini',
+        name: 'Gemini', 
+        icon: geminiIcon
     }
 ]
 

@@ -64,9 +64,11 @@ import { getModelById } from '@/config/models';
 import { chatgpt } from '@/libs/gpt';
 import { claude } from '@/libs/claude';
 import { Data } from '@icon-park/vue-next';
+import { gemini } from '@/libs/gemini';
 
 let gptAPIKey = "";
 let claudeAPIKey = "";
+let geminiAPIKey = "";
 let haveApiKey = ref(false);
 let isTalking = ref(false);
 let messageContent = ref("");
@@ -93,6 +95,15 @@ const chatSessions = ref<Record<string, ChatSession>> ({
       {
         role: "assistant",
         content: `你好，我是 Claude，让我来协助你。`  
+      }
+    ]
+  }, 
+  gemini: {
+    model: 'gemini',
+    messages: [
+      {
+        role: "user",
+        content: `你好，我是Gemini，你可以帮我做些什么呢？`  
       }
     ]
   }
@@ -130,14 +141,17 @@ const sendChatMessage = async(content: string = messageContent.value) => {
       content: "",
     });
 
-    const { body, status } = await chat(currentSession.messages, getAPIKey(), props.selectedModel);
-    // const { body, status } = await chatgpt(currentSession.messages, getAPIKey());
-    // const { body, status } = await claude(currentSession.messages, getAPIKey());
+    const response = await chat(currentSession.messages, getAPIKey(), props.selectedModel);
 
-
-    if (body) {
-      const reader = body.getReader();
-      await readStream(reader, status);
+    // gemini don't support stream
+    if (props.selectedModel=== 'gemini') {
+      const data = await response.json();
+      appendLastMessageContent(data.candidates?.[0]?.content?.parts?.[0]?.text ?? "");
+    } else {
+      if (response.body) {
+        const reader = response.body.getReader();
+        await readStream(reader, response.status);
+      }
     }
   } catch (error: any) {
     appendLastMessageContent(error);
@@ -145,7 +159,6 @@ const sendChatMessage = async(content: string = messageContent.value) => {
     isTalking.value = false;
   }
 }
-
 const readStream = async (
   reader: ReadableStreamDefaultReader<Uint8Array>, 
   status: number,
@@ -175,24 +188,32 @@ const readStream = async (
       if (line.length === 0 || line.startsWith(":")) continue;
       try {
         const json = JSON.parse(line.substring(6));
-        if (props.selectedModel === 'chatgpt') {
-          if (line === "data: [DONE]") return;
-
-          const content = 
-            status === 200 
-              ? json.choices[0].delta.content ?? ""
-              : json.error.message;
+        const content = processModelResponseStream(json, line, status);
+        if (content) {
           appendLastMessageContent(content);
-        } else if (props.selectedModel === 'claude') {
-          if (json.type === 'content_block_delta') {
-            const content = json.delta.text ?? "";
-            appendLastMessageContent(content);
-          }
         }
       } catch (e) {
         console.error(e);
       }
     }
+  }
+}
+
+const processModelResponseStream = (json: any, line: string, status: number) => {
+  switch (props.selectedModel) {
+    case 'chatgpt':
+      if (line === "data: [DONE]") return;
+        return status === 200 
+          ? json.choices[0].delta.content ?? ""
+          : json.error.message;
+      break;
+    case 'claude':
+      if (json.type === 'content_block_delta') {
+        return json.delta.text ?? "";
+      }
+      return "";
+    default:
+      return null;
   }
 }
 
@@ -218,6 +239,8 @@ const getAPIKey = () => {
     return getGPTAPIKey();
   } else if (props.selectedModel === 'claude') {
     return getClaudeAPIKey();
+  } else if (props.selectedModel === 'gemini') {
+    return getGeminiAPIKey();
   }
   throw new Error(`No API key for model: ${props.selectedModel}`);
 };
@@ -241,6 +264,17 @@ const getClaudeAPIKey = () => {
   );
   return claudeAPIKey;
 }
+
+const getGeminiAPIKey = () => {
+  if (geminiAPIKey) return geminiAPIKey;
+  const aesAPIKey = localStorage.getItem("geminiAPIKey") ?? "";
+
+  geminiAPIKey = cryptoJS.AES.decrypt(aesAPIKey, getSecretKey()).toString(
+    cryptoJS.enc.Utf8
+  );
+  return geminiAPIKey;
+}
+
 </script>
 
 <style>
