@@ -14,6 +14,7 @@ app.post('/api/claude', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid API key' });
       return;
     }
+    console.log("api: ", apiKey)
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -24,6 +25,9 @@ app.post('/api/claude', async (req: Request, res: Response) => {
       },
       body: JSON.stringify(req.body)  
     });
+
+    console.log("Response headers:", response.headers);
+    console.log("Response status:", response.status);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -100,8 +104,6 @@ app.post('/api/gemini', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid API key' });
       return;
     }
-    console.log(req.headers)
-    console.log(req.body)
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
