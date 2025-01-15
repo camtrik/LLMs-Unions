@@ -1,45 +1,46 @@
+
 # LLMsUnion
 
-This template should help get you started developing with Vue 3 in Vite.
+A unified web interface for multiple Large Language Models (ChatGPT, Claude, Gemini) built with Vue 3 + Express.
 
-## Recommended IDE Setup
+![](/imgs/homepage.png)
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+# Roadmap
 
-## Type Support for `.vue` Imports in TS
+- [x] User API support and storage
+- [x] Support for multiple LLMs (ChatGPT, Claude, Gemini)
+- [x] Real-time message streaming
+- [ ] Access control
+- [ ] Conversation history management
+- [ ] Data import/export
+- [ ] Interface themes
+- [ ] Access to several LLMs and get the response at the same time 
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
-## Customize configuration
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+# Usage 
 
-## Project Setup
-
+### Frontend
 ```sh
+# In project root
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
+# or with yarn
+yarn install
+yarn dev
 ```
 
-### Type-Check, Compile and Minify for Production
-
+### Backend
 ```sh
-npm run build
+# In /server directory
+cd server
+
+npm install
+npm run dev
+# or with yarn
+yarn install
+yarn dev
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+### Settings
+Input the API key of the LLM you want to use in the `Settings` and start the chat!
